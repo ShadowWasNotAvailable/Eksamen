@@ -14,13 +14,29 @@ app.get('/testroute', (req, res) => {
 });
 
 app.post('/insertdata', async (req, res) => {
-    const { userdata } = req.body;
-    console.log('userdata: ' + userdata);
+    const { id, userdata } = req.body;
+    userdataid = id
+    console.log("id" + userdataid)
+    console.log( 'userdata: ' + userdata);
     fs.readFile(storagefile, "utf8", function (err, unparseddata) {
         if (err) { res.json({ success: false }); return; }
         const data = JSON.parse(unparseddata);
-        data.storagedata.push(userdata);
+        data.storagedata.push({ 'compdata': { userdata, userdataid } });
         fs.writeFile(storagefile, JSON.stringify(data), function (err) {
+            if (err) res.json({ success: false });
+            else res.json({ success: true });
+        });
+    });
+});
+
+app.delete('/removedata/:id', async (req, res) => {
+    const { id } = req.params;
+    console.log(`This is my id: ${id}`);
+    fs.readFile(storagefile, "utf8", function (err, unparseddata) {
+        if (err) { res.json({ success: false }); return; }
+        const data = JSON.parse(unparseddata);
+        const newData = data.storagedata.filter(item => item.compdata.userdataid !== id);
+        fs.writeFile(storagefile, JSON.stringify({ storagedata: newData }), function (err) {
             if (err) res.json({ success: false });
             else res.json({ success: true });
         });

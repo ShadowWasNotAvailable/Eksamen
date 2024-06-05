@@ -1,6 +1,7 @@
 <script>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 
 export default {
   setup() {
@@ -9,7 +10,9 @@ export default {
 
     const insertdata = async (userdata) => {
       try {
-        const result = await axios.post('http://localhost:8080/insertdata', { userdata: userdata });
+        const id = uuidv4();
+        console.log(id)
+        const result = await axios.post('http://localhost:8080/insertdata', {id: id, userdata: userdata });
         console.log(result);
         if (result.data.success) {
           const newdata = await getData();
@@ -24,6 +27,18 @@ export default {
       insertdata(inputData.value);
       inputData.value = '';  // Clear input after submission
     };
+
+    const removeData = async (id) => {
+      try {
+        const result = await axios.delete('http://localhost:8080/removedata/${id}')
+        console.log('ID:', id);
+        console.log(result)
+        return result.data.storagedata;
+      } catch (error) {
+        console.log('Feil ved henting av data:', error);
+        return[];
+      }
+    }
 
     const getData = async () => {
       try {
@@ -43,7 +58,8 @@ export default {
     return {
       submitData,
       inputData,
-      storagedata
+      storagedata,
+      removeData
     };
   },
 };
@@ -53,7 +69,12 @@ export default {
   <h1>Vue adøaldkøla</h1>
   <input v-model="inputData">
   <button @click="submitData">Submit</button>
-  <ul>
-    <li v-for="(element, index) in storagedata" :key="index">{{ element }}</li>
-  </ul>
+  <div v-for="(item, outerIndex) in storagedata" :key="'outer' + outerIndex">
+    <ul>
+      <li :id="item.compdata.userdataid">
+        {{ item.compdata.userdata }}
+        <button @click="removeData(item.compdata.userdataid)">Fjern</button>
+      </li>
+    </ul>
+  </div>
 </template>
